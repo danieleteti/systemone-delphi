@@ -3,11 +3,6 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
-
-### Added
-- `sample\UseCases.dpr`: ranking emails, classifying documents and gating an assistant.
-
 ## [0.9.0] - 2026-10-20
 
 First public version.
@@ -19,6 +14,7 @@ First public version.
 - `SYSTEMONE_CLIENT_VERSION` constant.
 - Offline test suite (36 checks, fake server), live test suite (15 checks: Ollama with `tev1:4b`, and an Ollama chat model for the adapter), `tests\run_all.py`.
 - `sample\Triage.dpr`.
+- `sample\UseCases.dpr`: ranking emails by priority, classifying documents and gating an assistant.
 
 ### Known limits
 - Not yet tested with the real Jev API (a key is needed), nor with Ollaya.
