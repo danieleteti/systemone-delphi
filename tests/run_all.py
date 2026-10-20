@@ -4,6 +4,8 @@ Builds and runs the tests (Windows, Delphi command-line compiler).
 
   python tests/run_all.py                 offline suite against tests/fake_server.py
   python tests/run_all.py --live          also the live suite against Ollama (tev1:4b)
+  python tests/run_all.py --live --chat-model minicpm-v4.6:1b
+                                          and TSystemOneLLMAdapter on that Ollama chat model
   python tests/run_all.py --bds "C:\\Program Files (x86)\\Embarcadero\\Studio\\23.0"
 
 The fake server is started and stopped here; nothing is left running.
@@ -44,6 +46,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bds", default=os.environ.get("BDS", r"C:\Program Files (x86)\Embarcadero\Studio\37.0"))
     ap.add_argument("--live", action="store_true", help="also test against Ollama on localhost:11434")
+    ap.add_argument("--chat-model", default="", help="with --live: an Ollama chat model, to test TSystemOneLLMAdapter too")
     a = ap.parse_args()
     if not os.path.exists(os.path.join(a.bds, "bin", "dcc32.exe")):
         sys.exit("no dcc32.exe under %s: pass --bds or set BDS" % a.bds)
@@ -66,7 +69,8 @@ def main():
 
     if a.live:
         live = build(a.bds, "SystemOneLiveTest.dpr")
-        if run(live) != 0:
+        args = ["http://localhost:11434", "tev1:4b", "-", a.chat_model] if a.chat_model else []
+        if run(live, *args) != 0:
             failed.append("live")
 
     print("\nFAILED: " + ", ".join(failed) if failed else "\nALL SUITES PASSED")

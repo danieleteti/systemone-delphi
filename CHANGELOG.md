@@ -12,11 +12,11 @@ First public version.
 - `TSystemOneClient`: the System One API (`POST /v1/systemone`), for TypeSafe Jev and for Ollama (0.35.1 or later). `Create(server, key, model)` has no defaults, so nothing assumes Jev. The key may be empty: then no `Authorization` header is sent.
 - `TSystemOneLLMAdapter`: the same questions answered by any OpenAI-compatible chat model, with a strict JSON Schema, normalized probabilities, clamped `Noul`, and tolerance for JSON wrapped in a code fence.
 - `SYSTEMONE_CLIENT_VERSION` constant.
-- Offline test suite (36 checks, fake server), live test suite (9 checks, Ollama + `tev1:4b`), `tests\run_all.py`.
+- Offline test suite (36 checks, fake server), live test suite (15 checks: Ollama with `tev1:4b`, and an Ollama chat model for the adapter), `tests\run_all.py`.
 - `sample\Triage.dpr`.
 
 ### Known limits
-- Not tried with the real Jev API (no key available), nor with Ollaya.
+- Not yet tested with the real Jev API (a key is needed), nor with Ollaya.
 - The `box` question type is not supported.
 - Built and tested with Delphi 12 and 13 on Win32 only.
 

@@ -3,8 +3,10 @@ program SystemOneLiveTest;
 {$APPTYPE CONSOLE}
 
 // LIVE test of SystemOne.Client against a real System One server.
-//   SystemOneLiveTest.exe [base-url] [model] [api-key]
-// Defaults: Ollama on this machine, model tev1:4b, no key.
+//   SystemOneLiveTest.exe [base-url] [model] [api-key] [chat-model]
+// Defaults: Ollama on this machine, model tev1:4b, no key ('-' means no key).
+// With a chat-model (any model that Ollama can chat with, e.g. minicpm-v4.6:1b)
+// TSystemOneLLMAdapter is tested too, against <base-url>/v1.
 // Needs Ollama >= 0.35.1 (the models need a newer one) and `ollama pull tev1:4b`.
 // The checks are about the CLIENT (shape, parsing, ranges) and a few answers
 // a decision model gets right at temperature 0; they are not a benchmark.
@@ -40,7 +42,8 @@ begin
 end;
 
 var
-  Base, Model, Key: string;
+  Base, Model, Key, ChatModel: string;
+  Raised: Boolean;
   Client: ISystemOneClient;
   Resp: TSOResponse;
   SW: TStopwatch;
@@ -52,6 +55,9 @@ begin
   if ParamCount > 0 then Base := ParamStr(1);
   if ParamCount > 1 then Model := ParamStr(2);
   if ParamCount > 2 then Key := ParamStr(3);
+  if Key = '-' then Key := '';
+  ChatModel := '';
+  if ParamCount > 3 then ChatModel := ParamStr(4);
   WriteLn('LIVE: ', Base, '  model ', Model);
   try
     Client := TSystemOneClient.Create(Base, Key, Model);
@@ -98,6 +104,51 @@ begin
       Check('second call is fast (model already loaded)', SW.ElapsedMilliseconds < 3000, IntToStr(SW.ElapsedMilliseconds));
     finally
       Resp.Free;
+    end;
+
+    // an error answer of the real server must reach the caller as ESystemOneError
+    Raised := False;
+    try
+      Client := TSystemOneClient.Create(Base, Key, 'no-such-model:1b');
+      Client.Ask('x', [TSO.Noul('a', 'b')]).Free;
+    except
+      on E: ESystemOneError do
+        Raised := Pos('HTTP 4', E.Message) > 0;
+    end;
+    Check('an unknown model raises ESystemOneError with the HTTP status', Raised);
+
+    if ChatModel <> '' then
+    begin
+      WriteLn('  adapter on chat model ', ChatModel);
+      Client := TSystemOneLLMAdapter.Create(Base + '/v1', Key, ChatModel);
+      SW := TStopwatch.StartNew;
+      Resp := Client.Ask('Hello, the August invoice is wrong: you charged me twice. ' +
+        'I want a refund, it is urgent.', [
+        TSO.Choice('team', 'Which team should handle this request')
+          .Option('billing', 'Payments, charges, refunds')
+          .Option('technical', 'Faults and service problems')
+          .Option('other', 'Anything else'),
+        TSO.Noul('urgent', 'The message conveys urgency'),
+        TSO.Score('severity', 'How serious is the problem', ['minor', 'medium', 'serious'])]);
+      SW.Stop;
+      try
+        WriteLn(Format('  adapter call %d ms, %d input and %d output tokens',
+          [SW.ElapsedMilliseconds, Resp.InputTokens, Resp.OutputTokens]));
+        Check('adapter: three answers', Resp.Answers.Count = 3);
+        Check('adapter: choice billing', Resp.Answers['team'].Choice = 'billing', Resp.Answers['team'].Choice);
+        Check('adapter: probabilities sum to 1', Abs(SumOf(Resp.Answers['team']) - 1) < 0.01,
+          FloatToStr(SumOf(Resp.Answers['team'])));
+        Check('adapter: noul in range', (Resp.Answers['urgent'].Noul >= 0) and (Resp.Answers['urgent'].Noul <= 1),
+          FloatToStr(Resp.Answers['urgent'].Noul));
+        Check('adapter: score within the scale',
+          (Resp.Answers['severity'].Score >= 0) and (Resp.Answers['severity'].Score <= 2),
+          FloatToStr(Resp.Answers['severity'].Score));
+        WriteLn(Format('  team=%s (%.3f)  urgent=%.3f  severity=%.2f',
+          [Resp.Answers['team'].Choice, Resp.Answers['team'].Confidence, Resp.Answers['urgent'].Noul,
+           Resp.Answers['severity'].Score]));
+      finally
+        Resp.Free;
+      end;
     end;
   except
     on E: Exception do

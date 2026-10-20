@@ -42,7 +42,7 @@ flowchart LR
 - **Typed, ready-to-use answers.** Label, expected level, probability of every option, confidence, token usage. No text to parse.
 - **Local or cloud.** Point `TSystemOneClient` at Ollama on your machine (no key, no data leaves it) or at the Jev API (with a key).
 - **No dependencies.** A single unit, `System.JSON` and `System.Net.HttpClient` from the RTL. Nothing to install.
-- **Tested.** An offline suite (36 checks) against a fake server, and a live suite against a real model.
+- **Tested.** An offline suite (36 checks) against a fake server, and a live suite (15 checks) against real models on Ollama, `TSystemOneLLMAdapter` included.
 
 ## Install
 
@@ -94,12 +94,12 @@ The three question builders:
 | Class | Talks to | Notes |
 |---|---|---|
 | `TSystemOneClient` | `POST /v1/systemone` of the TypeSafe API, or of Ollama (`http://localhost:11434`), or of any server with the same API | `Create(server, key, model)`: no server is assumed, you always say where the model is. Jev needs a key; pass `''` for a local server and no `Authorization` header is sent |
-| `TSystemOneLLMAdapter` | `/chat/completions` of OpenAI, OpenRouter, Ollama, vLLM... | Asks for a strict JSON Schema, normalizes the probabilities it gets back. Slower and costlier than a System One model, and the probabilities are the model's opinion, not calibrated: use it to build and test the flow, or when you have no System One model |
+| `TSystemOneLLMAdapter` | `/chat/completions` of OpenAI, OpenRouter, Ollama, vLLM... | Asks for a strict JSON Schema, normalizes the probabilities it gets back. The probabilities are the ones the chat model reports, so choose thresholds on your own data. Use it to build and test the flow before you have a System One model (the calling code stays the same when you switch), or when you have none|
 
 ## Status and honest limits
 
-- **Tried against:** Ollama 0.40.6 with `tev1:4b` on an RTX 4060 laptop GPU (8 GB). The first call after the model is unloaded takes seconds (loading); then about 90 ms per call.
-- **Not tried:** the real Jev API (the client follows the documented request and response shapes and is tested against a fake server, but nobody has run it with a live key yet), Ollaya, and the other Ollama models (`tev1:0.8b`, `nimble`, `clef`).
+- **Tested against:** Ollama 0.40.6 with `tev1:4b` on an RTX 4060 laptop GPU (8 GB): the first call after the model is unloaded takes seconds (loading), then about 90 ms per call. `TSystemOneLLMAdapter` is tested against an Ollama chat model (`minicpm-v4.6:1b`).
+- **Not yet tested:** the real Jev API (the client follows the documented request and response shapes and is tested against a fake server), OpenRouter, Ollaya and the Ollama models other than `tev1:4b` (`tev1:0.8b`, `nimble`, `clef`).
 - **Not supported:** images and the `box` question type (find an object in an image). Jev announced both in 1.14 as an opt-in experimental feature; the open models on Ollama that I checked (`tev1`, `nimble`) are text only.
 - **Short texts for `tev1`:** its Ollama page says it runs with a context of about 2,000 tokens. Send it a ticket, not a document.
 - **Compilers:** built and tested with Delphi 12 and 13, Win32. Other platforms and versions are untested.
@@ -110,6 +110,7 @@ The three question builders:
 ```bat
 python tests\run_all.py              rem builds and runs the offline suite
 python tests\run_all.py --live       rem plus the live suite against Ollama + tev1:4b
+python tests\run_all.py --live --chat-model minicpm-v4.6:1b   rem and TSystemOneLLMAdapter on that chat model
 python tests\run_all.py --bds "C:\Program Files (x86)\Embarcadero\Studio\23.0"
 ```
 

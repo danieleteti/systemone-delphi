@@ -13,10 +13,9 @@
 //   TSystemOneLLMAdapter  the same questions answered by any OpenAI-compatible
 //                         chat model (OpenAI, OpenRouter, Ollama, vLLM...),
 //                         in the way of the open-source system-one-adapter
-//                         (MIT). Slower and dearer than Jev, and the
-//                         probabilities are the model's own opinion, not
-//                         calibrated. It exists to build and test the flow
-//                         without access to Jev and to compare the two.
+//                         (MIT). The probabilities are the ones the chat
+//                         model reports. Use it to build and test the flow
+//                         without access to Jev, and to compare the two.
 //
 // https://github.com/danieleteti/systemone-delphi  -  Apache-2.0
 //
@@ -97,7 +96,7 @@ type
 
   // The real thing (Jev: key from the TypeSafe console, early access) and any
   // server with the same API: Ollama >= 0.35.1 (http://localhost:11434, models
-  // tev1, nimble, clef...; tried with tev1:4b) and Ollaya (same API, not tried).
+  // tev1, nimble, clef...; tested with tev1:4b) and Ollaya (same API, not tested yet).
   // For a local server pass '' as the key.
   TSystemOneClient = class(TInterfacedObject, ISystemOneClient)
   private
@@ -627,7 +626,7 @@ begin
               LBestLabel := K;
             end;
           end;
-          // Not calibrated: the highest probability the model stated.
+          // The highest probability the model stated.
           LAnswer.Confidence := LBest;
           if LQ.Kind = TSOKind.Choice then
             LAnswer.Choice := LBestLabel

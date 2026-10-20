@@ -21,6 +21,7 @@ Delphi client for System One models (typed questions in, answers with probabilit
 ```bat
 python tests\run_all.py            :: offline suite (36 checks)
 python tests\run_all.py --live     :: plus live suite (needs Ollama >= 0.35.1 and `ollama pull tev1:4b`)
+python tests\run_all.py --live --chat-model <ollama chat model>   :: and the adapter
 ```
 
 Say what was verified: "compiles", "the offline suite passes" (fake server, proves the client only) and "seen working" (live) are three different claims. The real Jev API has not been tried.
