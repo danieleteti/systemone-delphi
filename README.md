@@ -79,7 +79,7 @@ begin
 end;
 ```
 
-A complete, runnable version is in [`sample\Triage.dpr`](sample/Triage.dpr).
+A complete, runnable version is in [`sample\Triage.dpr`](sample/Triage.dpr). [`sample\UseCases.dpr`](sample/UseCases.dpr) runs three more uses on a few messages: ranking emails by priority, classifying incoming documents and gating an assistant.
 
 The three question builders:
 

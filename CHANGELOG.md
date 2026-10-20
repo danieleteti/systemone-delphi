@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- `sample\UseCases.dpr`: ranking emails, classifying documents and gating an assistant.
+
 ## [0.9.0] - 2026-10-20
 
 First public version.
